@@ -1,5 +1,9 @@
 use serde::Serialize;
 
+/**
+ * A Signald request
+ * Exists of all the possible fields necessary by signald
+ */
 #[derive(Serialize, Default, Clone)]
 pub struct SignaldRequest {
     #[serde(rename = "type")]
@@ -33,6 +37,9 @@ pub struct SignaldRequest {
     pub avatar: Option<String>,
 }
 impl SignaldRequest {
+    /**
+     * Parse a request to json
+     */
     pub fn to_string(&self) -> String {
         serde_json::to_string(self).unwrap()
     }
@@ -64,14 +71,21 @@ impl SignaldRequestBuilder {
         self.request.message_body = Some(message_body);
     }
 
-    pub fn flush(&mut self) {
-        self.request = Default::default();
-    }
-
     pub fn set_id(&mut self, id: String) {
         self.request.id = Some(id);
     }
 
+    /**
+     * Resets the internal request object, useful for starting over
+     */
+    pub fn flush(&mut self) {
+        self.request = Default::default();
+    }
+
+    /**
+     * Create a request
+     * @Returns a clone of the internal request
+     */
     pub fn build(&self) -> SignaldRequest {
         self.request.clone()
     }
