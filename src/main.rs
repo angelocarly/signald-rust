@@ -5,6 +5,10 @@ use signald::signald::Signald;
 mod common;
 mod signald;
 
+/**
+ * Main is currently used for debugging purposes
+ * The library itself only consists of the signal/ folder
+ */
 fn main() {
     let mut signald = Signald::connect(SOCKET_PATH.to_string());
 
