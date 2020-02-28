@@ -1,3 +1,4 @@
+use std::{thread, time};
 use crate::signald::signaldrequest::SignaldRequestBuilder;
 use common::SOCKET_PATH;
 use signald::signald::Signald;
@@ -16,21 +17,37 @@ fn main() {
     messagebuilder.set_type("send".to_string());
     messagebuilder.set_username("+32472271852".to_string());
     messagebuilder.set_recipient_number("+32472271852".to_string());
-    messagebuilder.set_message_body("TReess1".to_string());
+    messagebuilder.set_message_body("Heeey jarne".to_string());
     let req = messagebuilder.build();
 
+    signald.subscribe("+32472271852".to_string());
+
     // signald.subscribe("+32472271852".to_string());
-    // signald.send_request(&req);
+    signald.send_request(&req);
+    
     // signald.link();
     // signald.version();
+    // signald.list_contacts("+32472271852".to_string());
+    // signald.list_contacts("+32472271852".to_string());
     signald.list_contacts("+32472271852".to_string());
-    signald.list_contacts("+32472271852".to_string());
-    signald.list_contacts("+32472271852".to_string());
+//    signald.read_requests();
 
-    signald.read_requests();
     // Read all incoming messages
     // let stream = BufReader::new(stream);
     // for line in stream.lines() {
     // println!("{}", line.unwrap());
     // }
+
+    loop {
+        signald.sync();
+    }
+}
+
+fn send_jarne() {
+    let mut messagebuilder = SignaldRequestBuilder::new();
+    messagebuilder.set_type("send".to_string());
+    messagebuilder.set_username("+32472271852".to_string());
+    messagebuilder.set_recipient_number("+32484881614".to_string());
+    messagebuilder.set_message_body("Heeey jarne".to_string());
+    let req = messagebuilder.build();
 }
