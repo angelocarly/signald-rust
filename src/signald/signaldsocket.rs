@@ -1,39 +1,66 @@
-use tokio::net::UnixStream;
 use crate::signald::signaldrequest::SignaldRequest;
-use std::io::BufReader;
-use std::io::Write;
-use std::io::prelude::*;
-use std::thread;
-use std::sync::mpsc;
+//use tokio::net::UnixStream;
+//use tokio::prelude::*;
+use async_std::os::unix::net::UnixStream;
+use async_std::io::BufReader;
+use async_std::fs::File;
+use async_std::prelude::*;
+//use std::io::BufReader;
+//use std::io::Write;
+//use std::thread;
+//use std::sync::mpsc;
+
+pub trait SignaldEvents {
+    fn on_connect(&self, path: &str) {}
+    fn on_message(&self, mesg: &str) {}
+    fn on_response(&self, mesg: &str) {}
+}
 
 pub struct SignaldSocket {
-    socket: UnixStream,
+    socket_path: String,
+    socket: Option<UnixStream>,
+    hooks: Vec<Box<SignaldEvents>>
 }
 impl SignaldSocket {
-    pub async fn new(socket_path: String) -> SignaldSocket {
-        // Create two sockets
-        let socket = match UnixStream::connect(&socket_path) {
-            Err(_) => panic!("Signald server is not running"),
+    pub async fn new(socket_path: String) -> Self {
+        Self {
+            socket_path: socket_path,
+            socket: None,
+            hooks: Vec::new()
+        }
+    }
+
+    pub fn add_event_hook<E: SignaldEvents + 'static>(&mut self, hook: E) {
+        self.hooks.push(Box::new(hook));
+    }
+
+    pub async fn connect(&mut self) {
+
+        let socket = match UnixStream::connect(self.socket_path.to_string()).await {
             Ok(stream) => {
-                println!("Connected to socket: {}", &socket_path);
+                for hook in &self.hooks {
+                    hook.on_connect(self.socket_path.as_str());
+                }
                 stream
             }
+            Err(err) => {
+                panic!("AAAA");
+            }
         };
-        //let socket_clone = socket.try_clone().expect("Couldn't clone socket");
 
-        //let (tx, rx) = mpsc::channel();
-        //thread::spawn(move || {
-            //let stream = BufReader::new(socket);
-            //for line in stream.lines() {
-                //tx.send(line).unwrap();
-            //}
-            //println!("Reader exited");
-        //});
-        //let received = rx.recv().unwrap();
-        //println!("{:?}", received);
+        let reader = async_std::io::BufReader::new(&socket);
+        let mut lines = reader.lines();
+        for line in lines.next().await {
+            match line {
+                Ok(l) => {
+                    for hook in &self.hooks {
+                        hook.on_message(&l);
+                    }
+                },
+                Err(_) => {
 
-        SignaldSocket {
-            socket: socket
+                }
+            }
         }
     }
 
@@ -42,13 +69,14 @@ impl SignaldSocket {
      */
     pub fn send_request(&mut self, request: &SignaldRequest) {
         let formatted_request = request.to_string() + "\n";
-        match self.writer.write_all(formatted_request.as_bytes()) {
-            Err(_) => panic!("Failed to send message"),
-            Ok(_) => println!("Message sent: {}", formatted_request.to_string()),
-        }
+        // match self.socket.write_all(formatted_request.as_bytes()) {
+        //     Err(_) => panic!("Failed to send message"),
+        //     Ok(_) => println!("Message sent: {}", formatted_request.to_string()),
+        // }
     }
 
     pub fn sync(&mut self) {
+        // self.socket.poll_read();
         //match self.reader.fill_buf() {
             //Err(_) => {},
             //Ok(s) => {

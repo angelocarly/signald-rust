@@ -1,6 +1,6 @@
 use crate::signald::signaldrequest::SignaldRequestBuilder;
 use crate::signald::signaldrequest::SignaldRequest;
-use crate::signald::signaldsocket::SignaldSocket;
+use crate::signald::signaldsocket::{SignaldSocket, SignaldEvents};
 use std::os::unix::net::UnixStream;
 use std::io::Write;
 use std::io::BufReader;
@@ -22,17 +22,24 @@ pub struct Signald {
     message_count: u32,
 }
 impl Signald {
+
     /**
      * Connect the socket on @socket_path
      * @Returns a new Signald instance
      */
-    pub fn connect(socket_path: String) -> Signald {
+    pub async fn new(socket_path: String) -> Signald {
         Signald {
-            socket: SignaldSocket::new(socket_path),
+            socket: SignaldSocket::new(socket_path).await,
             request_builder: SignaldRequestBuilder::new(),
             message_count: 0,
         }
 
+    }
+    pub async fn connect(&mut self) {
+        self.socket.connect().await;
+    }
+    pub fn add_event_hook<E: SignaldEvents + 'static>(&mut self, hook: E) {
+        self.socket.add_event_hook(hook);
     }
     /**
      * Send a request over the socket
