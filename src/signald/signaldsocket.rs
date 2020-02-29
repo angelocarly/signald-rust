@@ -75,7 +75,7 @@ impl SignaldSocket {
     }
 
     pub fn sync(&mut self) {
-        let iter = self.rx.as_ref().unwrap();
+        let iter = self.rx.as_ref().unwrap().try_iter();
         for i in iter {
             for hook in &self.hooks {
                 hook.on_message(&i);
