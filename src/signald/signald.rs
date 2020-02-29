@@ -8,6 +8,7 @@ use std::io::prelude::*;
 use std::thread;
 use std::time::Duration;
 use std::sync::mpsc::channel;
+use async_std::{fs::File, io, prelude::*, task};
 
 /**
  * Main signald class
@@ -27,16 +28,16 @@ impl Signald {
      * Connect the socket on @socket_path
      * @Returns a new Signald instance
      */
-    pub async fn new(socket_path: String) -> Signald {
+    pub fn new(socket_path: String) -> Signald {
         Signald {
-            socket: SignaldSocket::new(socket_path).await,
+            socket: SignaldSocket::new(socket_path),
             request_builder: SignaldRequestBuilder::new(),
             message_count: 0,
         }
 
     }
-    pub async fn connect(&mut self) {
-        self.socket.connect().await;
+    pub fn connect(&mut self) {
+        self.socket.connect();
     }
     pub fn add_event_hook<E: SignaldEvents + 'static>(&mut self, hook: E) {
         self.socket.add_event_hook(hook);
