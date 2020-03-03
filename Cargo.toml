@@ -7,11 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# serde - used to serialize/deserialize json
-#tokio = { version = "0.2.12", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-async-std = { version = "1.5.0", features = [ "std", "attributes"] }
-# mio = "0.6"
-futures = "0.3"
-# tokio-uds = { version = "0.2.6", feature = "uds" }
