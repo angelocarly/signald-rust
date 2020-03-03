@@ -2,7 +2,6 @@ use std::{thread, time};
 use crate::signald::signaldrequest::SignaldRequestBuilder;
 use common::SOCKET_PATH;
 use signald::signald::Signald;
-use async_std::prelude::*;
 use crate::signald::signaldsocket::SignaldEvents;
 
 mod common;
@@ -16,12 +15,14 @@ impl SignaldEvents for Logger {
         println!("Connected to {}", path);
     }
     fn on_message(&self, mesg: &str) {
-        println!("received msg {}", mesg);
+        println!("<-- {}\n", mesg);
     }
+    fn on_send(&self, mesg: &str) { println!("--> {}\n", mesg); }
 }
 
 /**
  * Main is currently used for debugging purposes
+ * Will be removed once I figure out how to create a proper Crate
  * The library itself only consists of the signal/ folder
  */
 fn main() {
