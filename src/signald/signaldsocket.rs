@@ -4,13 +4,12 @@ use std::os::unix::net::UnixStream;
 use std::thread;
 use std::io::{Write, BufReader, BufRead};
 use std::sync::mpsc::Receiver;
-use futures::AsyncWriteExt;
 
 pub trait SignaldEvents {
     fn on_connect(&self, path: &str) {}
     fn on_message(&self, mesg: &str) {}
     fn on_response(&self, mesg: &str) {}
-    fn on_sent(&self, mesg: &str) {}
+    fn on_send(&self, mesg: &str) {}
 }
 
 pub struct SignaldSocket {
@@ -43,7 +42,7 @@ impl SignaldSocket {
                 stream
             }
             Err(err) => {
-                panic!("AAAA");
+                panic!("Failed to connect socket");
             }
         };
         self.socket = Some(socket.try_clone().unwrap());
@@ -67,16 +66,13 @@ impl SignaldSocket {
 
     }
 
-    /**
-     * Send a request over the socket
-     */
     pub fn send_request(&mut self, request: &SignaldRequest) {
-        let formatted_request = request.to_string() + "\n";
+        let formatted_request = request.to_json_string() + "\n";
         match self.socket.as_ref().unwrap().write_all(formatted_request.as_bytes()) {
             Err(_) => panic!("Failed to send message"),
             Ok(_) => {
                 for hook in &self.hooks {
-                    hook.on_sent(&request.to_string());
+                    hook.on_send(&request.to_json_string());
                 }
             }
         }
