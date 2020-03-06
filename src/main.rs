@@ -2,34 +2,20 @@ use std::{thread, time};
 use crate::signald::signaldrequest::SignaldRequestBuilder;
 use common::SOCKET_PATH;
 use signald::signald::Signald;
-use crate::signald::signaldsocket::SignaldEvents;
+use tokio::prelude::*;
+use tokio::task;
 
 mod common;
 mod signald;
-
-struct Logger {
-
-}
-impl SignaldEvents for Logger {
-    fn on_connect(&self, path: &str) {
-        println!("Connected to {}", path);
-    }
-    fn on_message(&self, mesg: &str) {
-        println!("<-- {}\n", mesg);
-    }
-    fn on_send(&self, mesg: &str) { println!("--> {}\n", mesg); }
-}
 
 /**
  * Main is currently used for debugging purposes
  * Will be removed once I figure out how to create a proper Crate
  * The library itself only consists of the signal/ folder
  */
-fn main() {
-    let mut signald = Signald::new(SOCKET_PATH.to_string());
-    let logger = Logger {};
-    signald.add_event_hook(logger);
-    signald.connect();
+#[tokio::main]
+async fn main() {
+    let mut signald = Signald::connect(SOCKET_PATH.to_string());
 
     let mut messagebuilder = SignaldRequestBuilder::new();
     messagebuilder.set_type("send".to_string());
@@ -47,12 +33,12 @@ fn main() {
     // signald.version();
     // signald.list_contacts("+32472271852".to_string());
     // signald.list_contacts("+32472271852".to_string());
-    signald.list_contacts("+32472271852".to_string());
-//    signald.read_requests();
 
-    loop {
-        signald.sync();
-    }
+    let contacts = signald.list_contacts("+32472271852".to_string()).await;
+    let contacts1 = signald.list_contacts("+32472271852".to_string()).await;
+    println!("Received 1: {}\n", contacts);
+    println!("Received 2: {}", contacts1);
+//    signald.read_requests();
 
 }
 

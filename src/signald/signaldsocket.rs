@@ -1,61 +1,41 @@
 use crate::signald::signaldrequest::SignaldRequest;
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, Mutex};
 use std::os::unix::net::UnixStream;
 use std::thread;
 use std::io::{Write, BufReader, BufRead};
-use std::sync::mpsc::Receiver;
-
-pub trait SignaldEvents {
-    fn on_connect(&self, path: &str) {}
-    fn on_message(&self, mesg: &str) {}
-    fn on_response(&self, mesg: &str) {}
-    fn on_send(&self, mesg: &str) {}
-}
+use std::sync::mpsc::{Receiver, TryIter};
+use bus::{Bus, BusReader};
 
 pub struct SignaldSocket {
     socket_path: String,
-    socket: Option<UnixStream>,
-    reader_receiver: Option<Receiver<String>>,
-    hooks: Vec<Box<SignaldEvents>>
+    socket: UnixStream,
+    bus: Arc<Mutex<Bus<String>>>,
 }
 impl SignaldSocket {
-    pub fn new(socket_path: String) -> Self {
-        Self {
-            socket_path: socket_path,
-            socket: None,
-            reader_receiver: None,
-            hooks: Vec::new()
-        }
-    }
+    pub fn connect(socket_path:String) -> SignaldSocket {
 
-    pub fn add_event_hook<E: SignaldEvents + 'static>(&mut self, hook: E) {
-        self.hooks.push(Box::new(hook));
-    }
-
-    pub fn connect(&mut self) {
-
-        let socket = match UnixStream::connect(self.socket_path.to_string()){
+        let socket = match UnixStream::connect(socket_path.to_string()){
             Ok(stream) => {
-                for hook in &self.hooks {
-                    hook.on_connect(self.socket_path.as_str());
-                }
+                println!("Connected to socket");
                 stream
             }
             Err(err) => {
                 panic!("Failed to connect socket");
             }
         };
-        self.socket = Some(socket.try_clone().unwrap());
+        let socket_clone = socket.try_clone().unwrap();
 
         // Create a thread for the reader to use
-        let (tx, rx) = mpsc::channel::<String>();
-        self.reader_receiver = Some(rx);
+        let bus = Arc::new(Mutex::new(Bus::new(10)));
+        //let (tx, rx) = mpsc::channel::<String>();
+        let bus_tx = bus.clone();
         thread::spawn(move || {
             let reader = BufReader::new(socket);
             for line in reader.lines() {
                 match line {
                     Ok(l) => {
-                        tx.send(l);
+                        //tx.send(l);
+                        bus_tx.lock().unwrap().broadcast(l);
                     },
                     Err(_) => {
 
@@ -64,27 +44,25 @@ impl SignaldSocket {
             }
         });
 
+
+        Self {
+            socket_path: socket_path,
+            socket: socket_clone,
+            bus: bus,
+        }
     }
 
     pub fn send_request(&mut self, request: &SignaldRequest) {
         let formatted_request = request.to_json_string() + "\n";
-        match self.socket.as_ref().unwrap().write_all(formatted_request.as_bytes()) {
+        match self.socket.write_all(formatted_request.as_bytes()) {
             Err(_) => panic!("Failed to send message"),
             Ok(_) => {
-                for hook in &self.hooks {
-                    hook.on_send(&request.to_json_string());
-                }
+                println!("mesg sent {}", formatted_request);
             }
         }
     }
 
-    // Read all requests that have come in
-    pub fn sync(&mut self) {
-        let iter = self.reader_receiver.as_ref().unwrap().try_iter();
-        for i in iter {
-            for hook in &self.hooks {
-                hook.on_message(&i);
-            }
-        }
+    pub fn get_rx(&mut self) -> BusReader<String> {
+        self.bus.lock().unwrap().add_rx()
     }
 }
