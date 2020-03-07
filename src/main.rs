@@ -5,8 +5,8 @@ use signald::signald::Signald;
 use tokio::prelude::*;
 use tokio::task;
 
-mod common;
-mod signald;
+pub mod common;
+pub mod signald;
 
 /**
  * Main is currently used for debugging purposes
@@ -27,17 +27,25 @@ async fn main() {
     signald.subscribe("+32472271852".to_string());
 
     // signald.subscribe("+32472271852".to_string());
-    signald.send_request(&req);
+    //signald.send_request(&req);
     
     // signald.link();
     // signald.version();
     // signald.list_contacts("+32472271852".to_string());
     // signald.list_contacts("+32472271852".to_string());
 
-    let contacts = signald.list_contacts("+32472271852".to_string()).await;
-    let contacts1 = signald.list_contacts("+32472271852".to_string()).await;
-    println!("Received 1: {}\n", contacts);
-    println!("Received 2: {}", contacts1);
+    match signald.list_contacts("+32472271852".to_string()).await {
+        Ok(r) => {
+            println!("{:?}", r.as_str());
+        },
+        Err(e) => {
+            println!("Request timed out") ;
+        }
+    }
+    // let contacts: String = signald.list_contacts("+32472271852".to_string()).await;
+    // let contacts1 = signald.list_contacts("+32472271852".to_string()).await.unwrap();
+    // println!("Received 1: {}\n", contacts);
+    //println!("Received 2: {}", contacts1);
 //    signald.read_requests();
 
 }
