@@ -8,6 +8,7 @@ use bus::{Bus, BusReader};
 use std::time::Duration;
 use crate::signald::signaldresponse::SignaldResponse;
 use serde_json::Value;
+use crate::signald::signaldresponse::ResponseType::BusUpdate;
 
 pub struct SignaldSocket {
     socket_path: String,
@@ -20,7 +21,6 @@ impl SignaldSocket {
         // Connect the socket
         let socket = match UnixStream::connect(socket_path.to_string()){
             Ok(stream) => {
-                println!("Connected to socket");
                 stream
             }
             Err(err) => {
@@ -39,8 +39,8 @@ impl SignaldSocket {
             for line in reader.lines() {
                 match line {
                     Ok(l) => {
-                        println!("{}", l.as_str());
-                        let res: SignaldResponse = serde_json::from_str(&l).unwrap();
+                        let val = serde_json::from_str(&l).unwrap();
+                        let res: SignaldResponse = SignaldResponse::from_value(val);
                         bus_tx.lock().unwrap().broadcast(res);
                     },
                     Err(_) => {
@@ -55,9 +55,8 @@ impl SignaldSocket {
         // This is a hacky implementation and should be changed once recv_deadline can be implemented
         let bus_tx_seconds = bus.clone();
         let update_response = SignaldResponse {
-            _type: "bus_update".to_string(),
             _id: None,
-            _data: Value::Null
+            _data: BusUpdate
         };
         thread::spawn(move || {
             loop {

@@ -9,9 +9,10 @@ use bus::{Bus, BusIter, BusReader};
 use serde_json::Value;
 use std::sync::mpsc::RecvTimeoutError::Timeout;
 use std::sync::mpsc::RecvTimeoutError;
-use crate::signald::signaldresponse::SignaldResponse;
+use crate::signald::signaldresponse::{SignaldResponse, ResponseType};
 use crate::signald::signald::FilterType::{Id, Type};
 use std::slice::Iter;
+use crate::signald::signaldresponse::ResponseType::BusUpdate;
 
 pub enum FilterType {
     Id,
@@ -96,17 +97,17 @@ impl Signald {
         self.wait_for_request(Id, id).await
     }
     /// Get the current signald version
-    pub async fn version(&mut self) -> Result<SignaldResponse, RecvTimeoutError> {
-        let id = self.message_count.to_string();
-
-        self.request_builder.flush();
-        self.request_builder.set_type("version".to_string());
-        self.request_builder.set_id(id.clone());
-        let request = self.request_builder.build();
-
-        self.send_request(&request);
-        self.wait_for_request(Type, "version".to_string()).await
-    }
+    // pub async fn version(&mut self) -> Result<SignaldResponse, RecvTimeoutError> {
+    //     let id = self.message_count.to_string();
+    //
+    //     self.request_builder.flush();
+    //     self.request_builder.set_type("version".to_string());
+    //     self.request_builder.set_id(id.clone());
+    //     let request = self.request_builder.build();
+    //
+    //     self.send_request(&request);
+    //     self.wait_for_request(Type, ResponseType::Version()).await
+    // }
     /// Query all the user's contacts
     pub async fn list_contacts(&mut self, username: String) -> Result<SignaldResponse, RecvTimeoutError> {
         let id = self.message_count.to_string();
@@ -145,7 +146,7 @@ impl Signald {
             .take_while(|x| Instant::now() < end )
             .find(|response| {
                 // The systemdsocket sends an 'update' message each second, don't parse this
-                if response._type == "bus_update" { return false; }
+                if let BusUpdate = response._data { return false; }
 
                 match typ {
                     Id=> {
@@ -158,9 +159,13 @@ impl Signald {
                             }
                         }
                     }
-                    Type => {
-                        return &response._type == val.as_str();
-                    }
+                    // Type => {
+                    //     return match &response._data {
+                    //         val => {
+                    //             true
+                    //         }
+                    //     };
+                    // }
                     _ => panic!("Wrong singald filter"),
                 }
             });

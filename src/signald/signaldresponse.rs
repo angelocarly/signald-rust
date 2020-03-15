@@ -1,17 +1,57 @@
-use serde::Serialize;
+use serde::{Serialize, Deserializer};
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
+use crate::signald::signaldresponse::ResponseType::{ContactList, BusUpdate, Version};
+
+#[derive(Clone)]
+pub enum ResponseType {
+    BusUpdate,
+    Message(MessageData),
+    Version(VersionData),
+    ContactList(Vec<Account>),
+    Link,
+    Unsubscribe
+}
+impl ResponseType {
+    pub fn new(typ: &str, val: &Value) -> ResponseType {
+        match typ {
+            "contact_list" => {
+                let data = serde_json::from_value(val.clone()).unwrap();
+                return ResponseType::ContactList(data);
+            }
+            "version" => {
+                let data = serde_json::from_value(val.clone()).unwrap();
+                return Version(data);
+            }
+            "message" => {
+                let data = serde_json::from_value(val.clone()).unwrap();
+                return ResponseType::Message(data);
+            }
+            _ => panic!("No type found for {}", typ)
+        }
+
+    }
+}
 
 /// A Signald response
-#[derive(Serialize, Deserialize, Default, Clone)]
+#[derive(Clone)]
 pub struct SignaldResponse {
-    #[serde(rename = "type")]
-    pub _type: String,
-    #[serde(rename = "id")]
     pub _id: Option<String>,
-    #[serde(rename = "data")]
-    pub _data: Value,
+    pub _data: ResponseType,
+}
+impl SignaldResponse {
+    pub fn from_value(val: Value) -> SignaldResponse {
+        let id = val["id"].as_str().map(|x| x.to_string());
+
+        let data: ResponseType = ResponseType::new(val["type"].as_str().unwrap(), &val["data"]);
+
+        SignaldResponse {
+            _id: id,
+            _data: data
+        }
+
+    }
 }
 
 pub trait ResponseData {}
@@ -58,34 +98,33 @@ pub struct MessageData {
     pub _data_message: Option<Message>,
 }
 
-#[derive(Serialize, Deserialize, Default, Clone)]
-pub struct SyncMessage {
-    #[serde(rename = "sent")]
-    pub _sent: Option<SentMessage>,
-    #[serde(rename = "contacts")]
-    pub _contacts: Option<Contacts>,
-    #[serde(rename = "contactsComplete")]
-    pub _contacts_complete: bool,
-    #[serde(rename = "readMessages")]
-    pub _read_messages: Vec<ReadMessage>,
-    #[serde(rename = "stickerPackOperations")]
-    pub _sticker_pack_operations: Option<Vec<String>>,
-    #[serde(rename = "unidentifiedStatus")]
-    pub _unidentified_status: Option<Vec<String>>,
-    #[serde(rename = "isRecipientUpdate")]
-    pub _is_recipient_update: bool,
-}
+// #[derive(Serialize, Deserialize, Default, Clone)]
+// pub struct SyncMessage {
+//     #[serde(rename = "sent")]
+//     pub _sent: Option<SentMessage>,
+//     #[serde(rename = "contacts")]
+//     pub _contacts: Option<Contacts>,
+//     #[serde(rename = "contactsComplete")]
+//     pub _contacts_complete: bool,
+//     #[serde(rename = "readMessages")]
+//     pub _read_messages: Vec<ReadMessage>,
+//     #[serde(rename = "stickerPackOperations")]
+//     pub _sticker_pack_operations: Option<Vec<String>>,
+//     #[serde(rename = "unidentifiedStatus")]
+//     pub _unidentified_status: Option<Vec<String>>,
+//     #[serde(rename = "isRecipientUpdate")]
+//     pub _is_recipient_update: bool,
+// }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Message {
-   #[serde(rename = "timestamp")]
-   pub _timestamp: i64,
-   #[serde(rename = "message")]
-   pub _message: String,
-   #[serde(rename = "expiresInSeconds")]
-   pub _expires_in_seconds: i32,
+    #[serde(rename = "timestamp")]
+    pub _timestamp: i64,
+    #[serde(rename = "message")]
+    pub _message: String,
+    #[serde(rename = "expiresInSeconds")]
+    pub _expires_in_seconds: i32,
 }
-
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct SentMessage {
     #[serde(rename = "destination")]
@@ -99,7 +138,6 @@ pub struct SentMessage {
     #[serde(rename = "expirationStartTimestamp")]
     pub _is_recipient_update: bool,
 }
-
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct ReadMessage {
     #[serde(rename = "sender")]
@@ -109,7 +147,17 @@ pub struct ReadMessage {
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
-pub struct Contacts {
+pub struct ContactListData {
+    #[serde(flatten)]
+    pub contacts: Vec<Account>
+}
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct Account {
+    pub name: String,
+    pub number: String,
+    pub color: String,
+    #[serde(rename = "profileKey")]
+    pub profile_key: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
