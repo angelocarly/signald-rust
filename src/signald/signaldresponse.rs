@@ -11,7 +11,8 @@ pub enum ResponseType {
     Version(VersionData),
     ContactList(Vec<Account>),
     Link,
-    Unsubscribe
+    Subscribed,
+    Unsubscribed
 }
 impl ResponseType {
     pub fn new(typ: &str, val: &Value) -> ResponseType {
@@ -28,6 +29,9 @@ impl ResponseType {
                 let data = serde_json::from_value(val.clone()).unwrap();
                 return ResponseType::Message(data);
             }
+            "subscribed" => return ResponseType::Subscribed,
+            "unsubscribed" => return ResponseType::Unsubscribed,
+            "link" => return ResponseType::Link,
             _ => panic!("No type found for {}", typ)
         }
 
@@ -37,8 +41,8 @@ impl ResponseType {
 /// A Signald response
 #[derive(Clone)]
 pub struct SignaldResponse {
-    pub _id: Option<String>,
-    pub _data: ResponseType,
+    pub id: Option<String>,
+    pub data: ResponseType,
 }
 impl SignaldResponse {
     pub fn from_value(val: Value) -> SignaldResponse {
@@ -47,8 +51,8 @@ impl SignaldResponse {
         let data: ResponseType = ResponseType::new(val["type"].as_str().unwrap(), &val["data"]);
 
         SignaldResponse {
-            _id: id,
-            _data: data
+            id,
+            data
         }
 
     }
@@ -59,91 +63,119 @@ pub trait ResponseData {}
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct VersionData {
     #[serde(rename = "name")]
-    pub _name: String,
+    pub name: String,
     #[serde(rename = "version")]
-    pub _version: String,
+    pub version: String,
     #[serde(rename = "branch")]
-    pub _branch: String,
+    pub branch: String,
     #[serde(rename = "commit")]
-    pub _commit: String,
+    pub commit: String,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct MessageData {
     #[serde(rename = "username")]
-    pub _username: Option<String>,
+    pub username: Option<String>,
     #[serde(rename = "uuid")]
-    pub _uuid: Option<String>,
+    pub uuid: Option<String>,
     #[serde(rename = "source")]
-    pub _source: Option<String>,
+    pub source: Option<String>,
     #[serde(rename = "sourceDevice")]
-    pub _source_device: Option<i32>,
+    pub source_device: Option<i32>,
     #[serde(rename = "type")]
-    pub _type: i32,
+    pub typ: i32,
     #[serde(rename = "timestamp")]
-    pub _timestamp: i64,
+    pub timestamp: i64,
     #[serde(rename = "timestampISO")]
-    pub _timestamp_iso: String,
+    pub timestamp_iso: String,
     #[serde(rename = "serverTimestamp")]
-    pub _server_timestamp: i64,
+    pub server_timestamp: i64,
+    #[serde(rename = "hasLegacyMessage")]
+    pub has_legacy_message: bool,
     #[serde(rename = "hasContent")]
-    pub _has_content: bool,
+    pub has_content: bool,
+    #[serde(rename = "isSignalMessage")]
+    pub is_signal_message: Option<bool>,
+    #[serde(rename = "isPrekeySignalMessage")]
+    pub is_prekey_signal_message: Option<bool>,
     #[serde(rename = "isReceipt")]
-    pub _is_receipt: bool,
+    pub is_receipt: bool,
     #[serde(rename = "isUnidentifiedSender")]
-    pub _is_unidentified_sender: bool,
+    pub is_unidentified_sender: bool,
     #[serde(rename = "syncMessage")]
-    pub _sync_message: Value,
+    pub sync_message: Option<SyncMessage>,
     #[serde(rename = "dataMessage")]
-    pub _data_message: Option<Message>,
+    pub data_message: Option<Message>,
+    #[serde(rename = "typing")]
+    pub typing: Option<Typing>,
+    #[serde(rename = "receipt")]
+    pub receipt: Option<Receipt>,
 }
 
-// #[derive(Serialize, Deserialize, Default, Clone)]
-// pub struct SyncMessage {
-//     #[serde(rename = "sent")]
-//     pub _sent: Option<SentMessage>,
-//     #[serde(rename = "contacts")]
-//     pub _contacts: Option<Contacts>,
-//     #[serde(rename = "contactsComplete")]
-//     pub _contacts_complete: bool,
-//     #[serde(rename = "readMessages")]
-//     pub _read_messages: Vec<ReadMessage>,
-//     #[serde(rename = "stickerPackOperations")]
-//     pub _sticker_pack_operations: Option<Vec<String>>,
-//     #[serde(rename = "unidentifiedStatus")]
-//     pub _unidentified_status: Option<Vec<String>>,
-//     #[serde(rename = "isRecipientUpdate")]
-//     pub _is_recipient_update: bool,
-// }
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct SyncMessage {
+    #[serde(rename = "sent")]
+    pub sent: Option<SentMessage>,
+    // #[serde(rename = "contacts")]
+    // pub contacts: Option<Contacts>,
+    #[serde(rename = "contactsComplete")]
+    pub contacts_complete: bool,
+    #[serde(rename = "readMessages")]
+    pub read_messages: Option<Vec<ReadMessage>>,
+    #[serde(rename = "stickerPackOperations")]
+    pub sticker_pack_operations: Option<Vec<String>>,
+    #[serde(rename = "unidentifiedStatus")]
+    pub unidentified_status: Option<HashMap<String, bool>>,
+    // #[serde(rename = "isRecipientUpdate")]
+    // pub is_recipient_update: bool,
+}
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Message {
     #[serde(rename = "timestamp")]
-    pub _timestamp: i64,
+    pub timestamp: i64,
     #[serde(rename = "message")]
-    pub _message: String,
+    pub message: String,
     #[serde(rename = "expiresInSeconds")]
-    pub _expires_in_seconds: i32,
+    pub expires_in_seconds: i32,
 }
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct SentMessage {
     #[serde(rename = "destination")]
-    pub _destination: String,
+    pub destination: String,
     #[serde(rename = "timestamp")]
-    pub _timestamp: i64,
+    pub timestamp: i64,
     #[serde(rename = "expirationStartTimestamp")]
-    pub _expiration_start_timestamp: i64,
+    pub expiration_start_timestamp: i64,
+    #[serde(rename = "message")]
+    pub message: Message,
     #[serde(rename = "unidentifiedStatus")]
-    pub _unidentified_status: HashMap<String, i64>,
-    #[serde(rename = "expirationStartTimestamp")]
-    pub _is_recipient_update: bool,
+    pub unidentified_status: HashMap<String, bool>,
+    #[serde(rename = "isRecipientUpdate")]
+    pub is_recipient_update: bool,
 }
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct ReadMessage {
     #[serde(rename = "sender")]
-    pub _sender: String,
+    pub sender: String,
     #[serde(rename = "timestamp")]
-    pub _timestamp: i64,
+    pub timestamp: i64,
+}
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct Typing {
+    #[serde(rename = "action")]
+    pub action: String,
+    #[serde(rename = "timestamp")]
+    pub timestamp: i64,
+}
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct Receipt {
+    #[serde(rename = "type")]
+    pub typ: String,
+    #[serde(rename = "timestamps")]
+    pub timestamps: Vec<u64>,
+    #[serde(rename = "when")]
+    pub when: u64,
 }
 
 #[derive(Serialize, Deserialize, Default, Clone)]
@@ -160,12 +192,216 @@ pub struct Account {
     pub profile_key: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Default, Clone)]
-pub struct Receipt {
-    #[serde(rename = "type")]
-    pub _type: String,
-    #[serde(rename = "timestamps")]
-    pub _timestamps: Vec<String>,
-    #[serde(rename = "when")]
-    pub _when: i32,
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_sync_message_text() {
+        let message = serde_json::json!({
+            "type": "message",
+            "id": "test",
+            "data": {
+                "username": "+32000000000",
+                "source": "+32000000000",
+                "sourceDevice": 1,
+                "type": 1,
+                "timestamp": 1583863426832u64,
+                "timestampISO": "2020-03-10T18:03:46.832Z",
+                "serverTimestamp": 1583863428672u64,
+                "hasLegacyMessage": false,
+                "hasContent": true,
+                "isReceipt": false,
+                "isUnidentifiedSender": false,
+                "syncMessage": {
+                    "sent": {
+                        "destination": "+32111111111",
+                        "timestamp": 1583863426832u64,
+                        "expirationStartTimestamp": 0,
+                        "message": {
+                            "timestamp": 1583863426832u64,
+                                "message": "Zaterdagochtend?",
+                                    "expiresInSeconds": 0,
+                                    "attachments": []
+                                },
+                            "unidentifiedStatus": {
+                            "+3211111111": true
+                        },
+                        "isRecipientUpdate": false
+                    },
+                    "contactsComplete": false,
+                    "stickerPackOperations": []
+                }
+            }
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_sync_message_read() {
+        let message = serde_json::json!({
+            "type": "message",
+            "data": {
+                "username": "+32000000000",
+                "source": "+32000000000",
+                "sourceDevice": 1,
+                "type": 1,
+                "timestamp": 1583863416850u64,
+                "timestampISO": "2020-03-10T18:03:36.850Z",
+                "serverTimestamp": 1583863418138u64,
+                "hasLegacyMessage": false,
+                "hasContent": true,
+                "isReceipt": false,
+                "isUnidentifiedSender": false,
+                "syncMessage": {
+                    "contactsComplete": false,
+                    "readMessages": [{
+                        "sender": "+32111111111",
+                        "timestamp": 1583863416783u64
+                    }],
+                        "stickerPackOperations": []
+                }
+            }
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_data_message_text() {
+        let message = serde_json::json!({
+            "type": "message",
+            "id": "test",
+            "data": {
+                "username": "+32000000000",
+                "source": "+32111111111",
+                "sourceDevice": 0,
+                "type": 6,
+                "timestamp": 1583863470594u64,
+                "timestampISO": "2020-03-10T18:04:30.594Z",
+                "serverTimestamp": 1583863470817u64,
+                "hasLegacyMessage": false,
+                "hasContent": true,
+                "isReceipt": false,
+                "isUnidentifiedSender": true,
+                "dataMessage": {
+                    "timestamp": 1583863470594u64,
+                    "message": "Thanks",
+                    "expiresInSeconds": 0,
+                    "attachments": []
+                }
+            }
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_typing_message() {
+        let message = serde_json::json!({
+            "type": "message",
+            "data": {
+                "username": "+32000000000",
+                "source": "+32111111111",
+                "sourceDevice": 0,
+                "type": 6,
+                "timestamp": 1583863467014u64,
+                "timestampISO": "2020-03-10T18:04:27.014Z",
+                "serverTimestamp": 1583863467091u64,
+                "hasLegacyMessage": false,
+                "hasContent": true,
+                "isReceipt": false,
+                "isUnidentifiedSender": true,
+                "typing": {
+                    "action": "STARTED",
+                    "timestamp": 1583863467014u64
+                }
+            }
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_receipt_message() {
+        let message = serde_json::json!({
+            "type": "message",
+            "data": {
+                "username": "+32000000000",
+                "source": "+32111111111",
+                "sourceDevice": 0,
+                "type": 6,
+                "timestamp": 1583863428937u64,
+                "timestampISO": "2020-03-10T18:03:48.937Z",
+                "serverTimestamp": 1583863429257u64,
+                "hasLegacyMessage": false,
+                "hasContent": true,
+                "isReceipt": false,
+                "isUnidentifiedSender": true,
+                "receipt": {
+                    "type": "DELIVERY",
+                    "timestamps": [
+                        1583863426832u64
+                    ],
+                "when": 1583863428937u64
+                }
+            }
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_version_message() {
+        let message = serde_json::json!({
+            "type": "version",
+            "data": {
+                "name": "signald",
+                "version":"0.9.0+git2020-03-08r1a9be52a.5",
+                "branch":"master",
+                "commit":"1a9be52a721b873eebbec31072908c152bc762aa"
+            }
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_contact_list_message() {
+        let message = serde_json::json!({
+        "type":"contact_list",
+        "data":[{
+                "name":"AAAAA",
+                "number":"+32111111111",
+                "color":"blue_grey",
+                "profileKey":"11111="
+            },
+            {
+                "name":"BBBBB",
+                "number":"+32222222222",
+                "color":"purple",
+                "profileKey":"22222="
+            },
+            {
+                "name":"",
+                "number":"+32000000000",
+                "color":"grey",
+                "profileKey":"00000="
+            },
+            {
+                "name":"CCCCC",
+                "number":"+32333333333",
+                "color":"green"
+            },
+            {
+                "name":"DDDDD",
+                "number":"+32444444444",
+                "color":"teal"
+                ,"profileKey":"44444="
+            }]
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
 }
