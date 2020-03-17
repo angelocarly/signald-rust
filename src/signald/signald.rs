@@ -40,7 +40,7 @@ impl Signald {
     }
     /// Send a signald request on the socket
     pub fn send_request(&mut self, request: &SignaldRequest) {
-        // self.message_count += 1;
+        self.message_count += 1;
         self.socket.send_request(&request);
     }
 
@@ -146,11 +146,11 @@ impl Signald {
             .take_while(|x| Instant::now() < end )
             .find(|response| {
                 // The systemdsocket sends an 'update' message each second, don't parse this
-                if let BusUpdate = response._data { return false; }
+                if let BusUpdate = response.data { return false; }
 
                 match typ {
                     Id=> {
-                        match &response._id {
+                        match &response.id {
                             Some(s) => {
                                 return s == val.as_str();
                             },
