@@ -10,7 +10,8 @@ pub enum ResponseType {
     Message(MessageData),
     Version(VersionData),
     ContactList(Vec<Account>),
-    Link,
+    LinkingUri(LinkingUri),
+    LinkingError(LinkingError),
     Subscribed,
     Unsubscribed
 }
@@ -29,9 +30,16 @@ impl ResponseType {
                 let data = serde_json::from_value(val.clone()).unwrap();
                 return ResponseType::Message(data);
             }
+            "linking_uri" => {
+                let data = serde_json::from_value(val.clone()).unwrap();
+                return ResponseType::LinkingUri(data);
+            }
+            "linking_error" => {
+                let data = serde_json::from_value(val.clone()).unwrap();
+                return ResponseType::LinkingError(data);
+            }
             "subscribed" => return ResponseType::Subscribed,
             "unsubscribed" => return ResponseType::Unsubscribed,
-            "link" => return ResponseType::Link,
             _ => panic!("No type found for {}", typ)
         }
 
@@ -60,6 +68,7 @@ impl SignaldResponse {
 
 pub trait ResponseData {}
 
+// ========================================= VERSION ===============================================
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct VersionData {
     #[serde(rename = "name")]
@@ -72,6 +81,7 @@ pub struct VersionData {
     pub commit: String,
 }
 
+// ========================================= MESSAGE ===============================================
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct MessageData {
     #[serde(rename = "username")]
@@ -178,6 +188,7 @@ pub struct Receipt {
     pub when: u64,
 }
 
+// ==================================== CONTACT LIST ===============================================
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct ContactListData {
     #[serde(flatten)]
@@ -190,6 +201,27 @@ pub struct Account {
     pub color: String,
     #[serde(rename = "profileKey")]
     pub profile_key: Option<String>,
+}
+
+// ========================================= LINK ==================================================
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct LinkingUri {
+    pub uri: String,
+}
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct LinkingError {
+    pub msg_number: u32,
+    pub message: String,
+    pub error: bool,
+    pub request: Request,
+}
+#[derive(Serialize, Deserialize, Default, Clone)]
+pub struct Request {
+    #[serde(rename = "type")]
+    pub typ: String,
+    #[serde(rename = "expiresInSeconds")]
+    pub expires_in_seconds: u32,
+    pub when: u64,
 }
 
 #[cfg(test)]
@@ -400,6 +432,37 @@ mod tests {
                 "color":"teal"
                 ,"profileKey":"44444="
             }]
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_linking_uri_message() {
+        let message = serde_json::json!({
+            "type": "linking_uri",
+            "data": {
+                "uri": "tsdevice:/?uuid=Sx9vhPhZq5KHG4nZ4w4CFQ&pub_key=BYDtS3MR5qxQnHpRZTCLXp05LvDnqulYdYfpjUqVtpxc"
+            }
+        });
+        // Try to parse the message
+        SignaldResponse::from_value(message);
+    }
+
+    #[test]
+    fn test_parse_linking_error_message() {
+        let message = serde_json::json!({
+            "type": "linking_error",
+            "data": {
+                "msg_number": 1,
+                "message": "Timed out while waiting for device to link",
+                "error": true,
+                "request": {
+                    "type": "link",
+                    "expiresInSeconds": 0,
+                    "when": 0
+                }
+            }
         });
         // Try to parse the message
         SignaldResponse::from_value(message);
