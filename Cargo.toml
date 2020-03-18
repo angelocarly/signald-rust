@@ -9,7 +9,6 @@ keywords = ["signald"]
 categories = ["asynchronous", "api-bindings"]
 repository = "https://github.com/angelocarly/signald-rust"
 license = "MIT"
-license-file = "LICENSE"
 readme = "README.md"
 autoexamples = true
 edition = "2018"

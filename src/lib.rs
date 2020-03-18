@@ -1,4 +1,3 @@
-pub mod common;
 pub mod signald;
 
 #[cfg(test)]
