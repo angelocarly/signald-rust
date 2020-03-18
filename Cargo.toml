@@ -2,15 +2,23 @@
 name = "signald-rust"
 version = "0.1.0"
 authors = ["angelocarly <angelo.carly@protonmail.com>"]
+description = """
+A library to interface with Signald
+"""
+keywords = ["signald"]
+categories = ["asynchronous", "api-bindings"]
+repository = "https://github.com/angelocarly/signald-rust"
+license = "MIT"
+license-file = "LICENSE"
+readme = "README.md"
+autoexamples = true
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 bus = "2.2.3"
-tokio = { version = "0.2.13", features = ["full", "time"] }
+tokio = { version = "0.2.13", features = ["macros", "time"] }
 futures = "0.3.4"
 
 [[example]]
