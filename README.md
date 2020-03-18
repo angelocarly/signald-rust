@@ -7,6 +7,10 @@ A [signald](https://gitlab.com/thefinn93/signald) library written in Rust.
 - Send and receive any Signald message on the socket
 - Custom wrappers for Signald messages
 
-## Install
-
+## Usage
+Add this to you `Cargo.toml`
+```toml
+[dependencies]
+signald-rust = "0.1.0"
+```
 
