@@ -31,6 +31,8 @@ impl SignaldSocket {
 
         // Create a bus
         let bus = Arc::new(Mutex::new(Bus::new(bus_size)));
+        let inp = serde_json::from_str("{\"type\": \"message\",\"data\": {\"username\": \"+32472271852\",\"source\": \"+32484881614\",\"sourceDevice\": 0,\"type\": 6,\"timestamp\": 1583863470594,\"timestampISO\": \"2020-03-10T18:04:30.594Z\",\"serverTimestamp\": 1583863470817,\"hasLegacyMessage\": false,\"hasContent\": true,\"isReceipt\": false,\"isUnidentifiedSender\": true,\"dataMessage\": {\"timestamp\": 1583863470594,\"message\": \"Thankx\",\"expiresInSeconds\": 0,\"attachments\": []}}}").unwrap();
+        SignaldResponse::from_value(inp);
 
         // Broadcast on the bus in a new thread
         let bus_tx = bus.clone();
@@ -55,8 +57,8 @@ impl SignaldSocket {
         // This is a hacky implementation and should be changed once recv_deadline can be implemented
         let bus_tx_seconds = bus.clone();
         let update_response = SignaldResponse {
-            _id: None,
-            _data: BusUpdate
+            id: None,
+            data: BusUpdate
         };
         thread::spawn(move || {
             loop {

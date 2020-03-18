@@ -1,3 +1,6 @@
+pub mod common;
+pub mod signald;
+
 #[cfg(test)]
 mod tests {
     #[test]
