@@ -1,18 +1,15 @@
-#![feature(deadline_api)]
 use crate::signald::signaldrequest::SignaldRequestBuilder;
 use crate::signald::signaldrequest::SignaldRequest;
 use crate::signald::signaldsocket::{SignaldSocket};
 use tokio::time::*;
 use std::time::Duration;
-use std::sync::mpsc;
-use bus::{Bus, BusIter, BusReader};
-use serde_json::Value;
+use bus::{BusReader};
 use std::sync::mpsc::RecvTimeoutError::Timeout;
 use std::sync::mpsc::RecvTimeoutError;
-use crate::signald::signaldresponse::{SignaldResponse, ResponseType};
-use crate::signald::signald::FilterType::{Id, Type};
-use std::slice::Iter;
+use crate::signald::signaldresponse::{SignaldResponse};
+use crate::signald::signald::FilterType::{Id};
 use crate::signald::signaldresponse::ResponseType::BusUpdate;
+pub static SOCKET_PATH: &'static str = "/var/run/signald/signald.sock";
 
 pub enum FilterType {
     Id,
@@ -30,10 +27,14 @@ pub struct Signald {
 }
 impl Signald {
 
-    /// Connect the Signald socket
-    pub fn connect(socket_path: String) -> Signald {
+    /// Connect the default Signald socket
+    pub fn connect() -> Signald {
+        Signald::connect_path(SOCKET_PATH)
+    }
+    /// Connect to a custom Signald socket
+    pub fn connect_path(socket_path: &str) -> Signald {
         Signald {
-            socket: SignaldSocket::connect(socket_path, 100),
+            socket: SignaldSocket::connect(socket_path.to_string(), 100),
             request_builder: SignaldRequestBuilder::new(),
             message_count: 0,
         }
@@ -45,9 +46,8 @@ impl Signald {
     }
 
     // Signald messages
+    // Todo: add attachments, etc
     pub async fn send(&mut self, username: String, recipient_number: String, message_body: Option<String>) {
-        let id = self.message_count.to_string();
-
         self.request_builder.flush();
         self.request_builder.set_type("send".to_string());
         self.request_builder.set_username(username);
