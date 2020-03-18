@@ -1,11 +1,10 @@
 # signald-rust
-A signald library written in Rust.
+A [signald](https://gitlab.com/thefinn93/signald) library written in Rust.
 
 ## Features
-Send and receive messages via the [signald](https://gitlab.com/thefinn93/signald) socket.
+- Send and receive any Signald message on the socket
+- Custom wrappers for Signald messages
 
 ## Install
-*Todo*
 
-## Usage
-*Todo*
+

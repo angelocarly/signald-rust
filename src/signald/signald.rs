@@ -16,7 +16,6 @@ pub enum FilterType {
     Type
 }
 
-/// Responsible for all the communication to the signald socket
 pub struct Signald {
     // The signald socket
     socket: SignaldSocket,
@@ -47,6 +46,7 @@ impl Signald {
 
     // Signald messages
     // Todo: add attachments, etc
+    /// Send a message to the socket
     pub async fn send(&mut self, username: String, recipient_number: String, message_body: Option<String>) {
         self.request_builder.flush();
         self.request_builder.set_type("send".to_string());
@@ -96,7 +96,7 @@ impl Signald {
         self.send_request(&request);
         self.wait_for_request(Id, id).await
     }
-    /// Get the current signald version
+    // Get the current signald version
     // pub async fn version(&mut self) -> Result<SignaldResponse, RecvTimeoutError> {
     //     let id = self.message_count.to_string();
     //
@@ -131,9 +131,11 @@ impl Signald {
 
         self.send_request(&request);
     }
+    /// Get a response stream that returns every received message on the socket
     pub fn get_rx(&mut self) -> BusReader<SignaldResponse> {
         self.socket.get_rx()
     }
+    // Todo: make it possible to filter on type
     /// Get a response from the bus with a matching id
     /// Returns a RecvTimeoutError if the message took more than 3 seconds to return
     async fn wait_for_request(&mut self, typ: FilterType, val: String) -> Result<SignaldResponse, RecvTimeoutError> {

@@ -4,6 +4,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use crate::signald::signaldresponse::ResponseType::{ContactList, BusUpdate, Version, Unknown};
 
+/// Indicates which kind of Signald message is received
 #[derive(Clone)]
 pub enum ResponseType {
     BusUpdate,
@@ -14,34 +15,38 @@ pub enum ResponseType {
     LinkingError(LinkingError),
     Subscribed,
     Unsubscribed,
-    Unknown(Value),
+    /// An unknown response
+    /// String parameter is the type
+    /// Value parameter is a Value of the data
+    Unknown(String, Value),
 }
 impl ResponseType {
+    /// Create a ResponseType from response data
     pub fn new(typ: &str, val: &Value) -> ResponseType {
-        match typ {
+        return match typ {
             "contact_list" => {
                 let data = serde_json::from_value(val.clone()).unwrap();
-                return ResponseType::ContactList(data);
+                ResponseType::ContactList(data)
             }
             "version" => {
                 let data = serde_json::from_value(val.clone()).unwrap();
-                return Version(data);
+                Version(data)
             }
             "message" => {
                 let data = serde_json::from_value(val.clone()).unwrap();
-                return ResponseType::Message(data);
+                ResponseType::Message(data)
             }
             "linking_uri" => {
                 let data = serde_json::from_value(val.clone()).unwrap();
-                return ResponseType::LinkingUri(data);
+                ResponseType::LinkingUri(data)
             }
             "linking_error" => {
                 let data = serde_json::from_value(val.clone()).unwrap();
-                return ResponseType::LinkingError(data);
+                ResponseType::LinkingError(data)
             }
-            "subscribed" => return ResponseType::Subscribed,
-            "unsubscribed" => return ResponseType::Unsubscribed,
-            _ => return Unknown(val.clone())
+            "subscribed" => ResponseType::Subscribed,
+            "unsubscribed" => ResponseType::Unsubscribed,
+            _ => Unknown(typ.to_string(), val.clone())
         }
 
     }
