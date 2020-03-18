@@ -8,7 +8,7 @@ A [signald](https://gitlab.com/thefinn93/signald) library written in Rust.
 - Custom wrappers for Signald messages
 
 ## Usage
-Add this to you `Cargo.toml`
+Add this to you `Cargo.toml`:
 ```toml
 [dependencies]
 signald-rust = "0.1.0"
