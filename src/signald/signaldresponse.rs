@@ -2,7 +2,7 @@ use serde::{Serialize, Deserializer};
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
-use crate::signald::signaldresponse::ResponseType::{ContactList, BusUpdate, Version};
+use crate::signald::signaldresponse::ResponseType::{ContactList, BusUpdate, Version, Unknown};
 
 #[derive(Clone)]
 pub enum ResponseType {
@@ -13,7 +13,8 @@ pub enum ResponseType {
     LinkingUri(LinkingUri),
     LinkingError(LinkingError),
     Subscribed,
-    Unsubscribed
+    Unsubscribed,
+    Unknown(Value),
 }
 impl ResponseType {
     pub fn new(typ: &str, val: &Value) -> ResponseType {
@@ -40,7 +41,7 @@ impl ResponseType {
             }
             "subscribed" => return ResponseType::Subscribed,
             "unsubscribed" => return ResponseType::Unsubscribed,
-            _ => panic!("No type found for {}", typ)
+            _ => return Unknown(val.clone())
         }
 
     }
@@ -252,7 +253,7 @@ mod tests {
                         "expirationStartTimestamp": 0,
                         "message": {
                             "timestamp": 1583863426832u64,
-                                "message": "Zaterdagochtend?",
+                                "message": "messagedata123",
                                     "expiresInSeconds": 0,
                                     "attachments": []
                                 },
@@ -267,7 +268,17 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::Message(x) => {
+                assert_eq!(x.username.unwrap(), "+32000000000");
+
+                let sync_message = x.sync_message.unwrap();
+                let sent = sync_message.sent.unwrap();
+                assert_eq!(sent.message.message, "messagedata123");
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -297,7 +308,17 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::Message(x) => {
+                assert_eq!(x.username.unwrap(), "+32000000000");
+
+                let sync_message = x.sync_message.unwrap();
+                let read_message = sync_message.read_messages.unwrap();
+                assert_eq!(read_message.get(0).unwrap().sender, "+32111111111");
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -326,7 +347,16 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::Message(x) => {
+                let data_message = x.data_message.unwrap();
+                assert_eq!(data_message.message, "Thanks");
+                assert_eq!(data_message.timestamp, 1583863470594);
+                assert_eq!(data_message.expires_in_seconds, 0);
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -352,7 +382,15 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::Message(x) => {
+                let typing = x.typing.unwrap();
+                assert_eq!(typing.action, "STARTED");
+                assert_eq!(typing.timestamp, 1583863467014);
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -381,7 +419,15 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::Message(x) => {
+                let receipt = x.receipt.unwrap();
+                assert_eq!(receipt.typ, "DELIVERY");
+                assert_eq!(receipt.timestamps.get(0).unwrap().clone(), 1583863426832u64);
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -396,7 +442,16 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::Version(x) => {
+                assert_eq!(x.name, "signald");
+                assert_eq!(x.version, "0.9.0+git2020-03-08r1a9be52a.5");
+                assert_eq!(x.branch, "master");
+                assert_eq!(x.commit, "1a9be52a721b873eebbec31072908c152bc762aa");
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -434,7 +489,17 @@ mod tests {
             }]
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::ContactList(x) => {
+                let first_entry = x.get(0).unwrap();
+                assert_eq!(first_entry.name, "AAAAA");
+                assert_eq!(first_entry.color, "blue_grey");
+                assert_eq!(first_entry.profile_key.clone().unwrap(), "11111=");
+                assert_eq!(first_entry.number, "+32111111111");
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -446,7 +511,13 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::LinkingUri(x) => {
+                assert_eq!(x.uri, "tsdevice:/?uuid=Sx9vhPhZq5KHG4nZ4w4CFQ&pub_key=BYDtS3MR5qxQnHpRZTCLXp05LvDnqulYdYfpjUqVtpxc");
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 
     #[test]
@@ -465,6 +536,17 @@ mod tests {
             }
         });
         // Try to parse the message
-        SignaldResponse::from_value(message);
+        let result = SignaldResponse::from_value(message);
+        match result.data {
+            ResponseType::LinkingError(x) => {
+                assert_eq!(x.msg_number, 1);
+                assert_eq!(x.message, "Timed out while waiting for device to link");
+                assert_eq!(x.error, true);
+                assert_eq!(x.request.typ, "link");
+                assert_eq!(x.request.expires_in_seconds, 0);
+                assert_eq!(x.request.when, 0);
+            }
+            _ => panic!("Received wrong response type")
+        }
     }
 }
