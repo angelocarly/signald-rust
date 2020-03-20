@@ -1,14 +1,14 @@
-use crate::signald::signaldrequest::SignaldRequestBuilder;
-use crate::signald::signaldrequest::SignaldRequest;
-use crate::signald::signaldsocket::{SignaldSocket};
+use crate::signaldrequest::SignaldRequestBuilder;
+use crate::signaldrequest::SignaldRequest;
+use crate::signaldsocket::{SignaldSocket};
 use tokio::time::*;
 use std::time::Duration;
 use bus::{BusReader};
 use std::sync::mpsc::RecvTimeoutError::Timeout;
 use std::sync::mpsc::RecvTimeoutError;
-use crate::signald::signaldresponse::{SignaldResponse};
-use crate::signald::signald::FilterType::{Id};
-use crate::signald::signaldresponse::ResponseType::BusUpdate;
+use crate::signaldresponse::{SignaldResponse};
+use crate::signald::FilterType::{Id};
+use crate::signaldresponse::ResponseType::BusUpdate;
 pub static SOCKET_PATH: &'static str = "/var/run/signald/signald.sock";
 
 pub enum FilterType {
@@ -145,7 +145,7 @@ impl Signald {
 
         let result = rx.iter()
             // Stop the receiver once the time is over, this keeps updating thanks to the update messages in systemdsocket
-            .take_while(|x| Instant::now() < end )
+            .take_while(|_| Instant::now() < end )
             .find(|response| {
                 // The systemdsocket sends an 'update' message each second, don't parse this
                 if let BusUpdate = response.data { return false; }

@@ -1,15 +1,14 @@
-use crate::signald::signaldrequest::SignaldRequest;
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex};
 use std::os::unix::net::UnixStream;
 use std::thread;
 use std::io::{Write, BufReader, BufRead};
-use std::sync::mpsc::{Receiver, TryIter};
 use bus::{Bus, BusReader};
 use std::time::Duration;
-use crate::signald::signaldresponse::SignaldResponse;
-use serde_json::Value;
-use crate::signald::signaldresponse::ResponseType::BusUpdate;
+use crate::signaldresponse::SignaldResponse;
+use crate::signaldresponse::ResponseType::BusUpdate;
+use crate::signaldrequest::SignaldRequest;
 
+#[allow(dead_code)]
 pub struct SignaldSocket {
     socket_path: String,
     socket: UnixStream,
@@ -23,7 +22,7 @@ impl SignaldSocket {
             Ok(stream) => {
                 stream
             }
-            Err(err) => {
+            Err(_) => {
                 panic!("Failed to connect socket");
             }
         };
