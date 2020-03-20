@@ -1,5 +1,4 @@
 use std::sync::{Arc, Mutex};
-use std::io::{BufReader, BufRead};
 use bus::{Bus, BusReader};
 use crate::signaldresponse::SignaldResponse;
 use crate::signaldrequest::SignaldRequest;
@@ -41,7 +40,7 @@ impl TestSignaldSocket {
     }
 }
 impl Socket for TestSignaldSocket {
-    fn send_request(&mut self, request: &SignaldRequest) {
+    fn send_request(&mut self, _request: &SignaldRequest) {
         unimplemented!()
     }
 

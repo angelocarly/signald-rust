@@ -5,7 +5,7 @@ use std::time::Duration;
 use bus::{BusReader};
 use std::sync::mpsc::RecvTimeoutError::Timeout;
 use std::sync::mpsc::RecvTimeoutError;
-use crate::signaldresponse::{SignaldResponse, ResponseType, VersionData};
+use crate::signaldresponse::{SignaldResponse, ResponseType};
 use crate::signald::FilterType::{Id, Type};
 use crate::signaldresponse::ResponseType::BusUpdate;
 use crate::socket::Socket;
