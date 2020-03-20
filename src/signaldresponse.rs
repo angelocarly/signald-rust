@@ -8,11 +8,11 @@ use crate::signaldresponse::ResponseType::{Version, Unknown};
 #[derive(Clone)]
 pub enum ResponseType {
     BusUpdate,
-    Message(MessageData),
-    Version(VersionData),
-    ContactList(Vec<Account>),
-    LinkingUri(LinkingUri),
-    LinkingError(LinkingError),
+    Message(Option<MessageData>),
+    Version(Option<VersionData>),
+    ContactList(Option<Vec<Account>>),
+    LinkingUri(Option<LinkingUri>),
+    LinkingError(Option<LinkingError>),
     Subscribed,
     Unsubscribed,
     /// An unknown response

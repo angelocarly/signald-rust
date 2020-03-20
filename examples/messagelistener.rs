@@ -20,6 +20,7 @@ async fn main() {
     signald.get_rx().iter().for_each(|x| {
         match x.data {
             ResponseType::Message(message) => {
+                let message = message.unwrap();
                 if message.sync_message.is_some() {
                     let sync = message.sync_message.unwrap();
                     if sync.sent.is_some() {
