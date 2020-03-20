@@ -1,11 +1,16 @@
+[![Crates.io](https://img.shields.io/crates/v/signald-rust.svg)](https://crates.io/crates/signald-rust)
+
 # signald-rust
-A signald library written in Rust.
+A [signald](https://gitlab.com/thefinn93/signald) library written in Rust.
 
 ## Features
-Send and receive messages via the [signald](https://gitlab.com/thefinn93/signald) socket.
-
-## Install
-*Todo*
+- Send and receive any Signald message on the socket
+- Custom wrappers for Signald messages
 
 ## Usage
-*Todo*
+Add this to you `Cargo.toml`:
+```toml
+[dependencies]
+signald-rust = "0.1.0"
+```
+

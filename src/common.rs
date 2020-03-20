@@ -1,1 +1,0 @@
-pub static SOCKET_PATH: &'static str = "/var/run/signald/signald.sock";
