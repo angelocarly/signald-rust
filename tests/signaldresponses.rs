@@ -1,4 +1,4 @@
-use signald_rust::signald::signaldresponse::{SignaldResponse, ResponseType};
+use signald_rust::signaldresponse::{SignaldResponse, ResponseType};
 
 #[test]
 fn test_parse_sync_message_text() {
