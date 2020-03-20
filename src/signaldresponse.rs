@@ -1,8 +1,8 @@
-use serde::{Serialize, Deserializer};
+use serde::Serialize;
 use serde::Deserialize;
 use serde_json::Value;
 use std::collections::HashMap;
-use crate::signald::signaldresponse::ResponseType::{ContactList, BusUpdate, Version, Unknown};
+use crate::signaldresponse::ResponseType::{Version, Unknown};
 
 /// Indicates which kind of Signald message is received
 #[derive(Clone)]

@@ -1,5 +1,5 @@
-use signald_rust::signald::signald::Signald;
-use signald_rust::signald::signaldresponse::ResponseType;
+use signald_rust::signald::Signald;
+use signald_rust::signaldresponse::ResponseType;
 
 #[tokio::main]
 async fn main() {
