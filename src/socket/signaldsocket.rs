@@ -7,6 +7,7 @@ use std::time::Duration;
 use crate::signaldresponse::SignaldResponse;
 use crate::signaldresponse::ResponseType::BusUpdate;
 use crate::signaldrequest::SignaldRequest;
+use crate::socket::Socket;
 
 #[allow(dead_code)]
 pub struct SignaldSocket {
@@ -15,10 +16,10 @@ pub struct SignaldSocket {
     bus: Arc<Mutex<Bus<SignaldResponse>>>,
 }
 impl SignaldSocket {
-    pub fn connect(socket_path:String, bus_size: usize) -> SignaldSocket {
+    pub fn connect(socket_path: String, bus_size: usize) -> SignaldSocket {
 
         // Connect the socket
-        let socket = match UnixStream::connect(socket_path.to_string()){
+        let socket = match UnixStream::connect(socket_path.to_string()) {
             Ok(stream) => {
                 stream
             }
@@ -30,8 +31,6 @@ impl SignaldSocket {
 
         // Create a bus
         let bus = Arc::new(Mutex::new(Bus::new(bus_size)));
-        let inp = serde_json::from_str("{\"type\": \"message\",\"data\": {\"username\": \"+32472271852\",\"source\": \"+32484881614\",\"sourceDevice\": 0,\"type\": 6,\"timestamp\": 1583863470594,\"timestampISO\": \"2020-03-10T18:04:30.594Z\",\"serverTimestamp\": 1583863470817,\"hasLegacyMessage\": false,\"hasContent\": true,\"isReceipt\": false,\"isUnidentifiedSender\": true,\"dataMessage\": {\"timestamp\": 1583863470594,\"message\": \"Thankx\",\"expiresInSeconds\": 0,\"attachments\": []}}}").unwrap();
-        SignaldResponse::from_value(inp);
 
         // Broadcast on the bus in a new thread
         let bus_tx = bus.clone();
@@ -44,9 +43,7 @@ impl SignaldSocket {
                         let res: SignaldResponse = SignaldResponse::from_value(val);
                         bus_tx.lock().unwrap().broadcast(res);
                     },
-                    Err(_) => {
-
-                    }
+                    Err(_) => {}
                 }
             }
         });
@@ -73,8 +70,9 @@ impl SignaldSocket {
             bus: bus,
         }
     }
-
-    pub fn send_request(&mut self, request: &SignaldRequest) {
+}
+impl Socket for SignaldSocket {
+    fn send_request(&mut self, request: &SignaldRequest) {
         let formatted_request = request.to_json_string() + "\n";
         match self.socket.write_all(formatted_request.as_bytes()) {
             Err(_) => panic!("Failed to send message"),
@@ -84,7 +82,7 @@ impl SignaldSocket {
         }
     }
 
-    pub fn get_rx(&mut self) -> BusReader<SignaldResponse> {
+    fn get_rx(&mut self) -> BusReader<SignaldResponse> {
         self.bus.lock().unwrap().add_rx()
     }
 }

@@ -71,11 +71,6 @@ impl SignaldRequestBuilder {
         self.request.id = Some(id);
     }
 
-    /// Resets the internal request object, useful for creating a new request
-    pub fn flush(&mut self) {
-        self.request = Default::default();
-    }
-
     /// Create a request
     /// Returns a clone of the internal request
     pub fn build(&self) -> SignaldRequest {
