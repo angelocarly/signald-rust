@@ -20,7 +20,7 @@ pub enum FilterType {
 
 pub struct Signald {
     // The signald socket
-    socket: Box<dyn Socket + Send>,
+    socket: Box<dyn Socket + Send + Sync>,
     // A count of all the sent messages on this socket
     message_count: u32,
 }

@@ -11,6 +11,6 @@ A [signald](https://gitlab.com/thefinn93/signald) library written in Rust.
 Add this to you `Cargo.toml`:
 ```toml
 [dependencies]
-signald-rust = "0.1.3"
+signald-rust = "0.1.4"
 ```
 
