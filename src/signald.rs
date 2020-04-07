@@ -1,7 +1,6 @@
 use crate::signaldrequest::SignaldRequestBuilder;
 use crate::signaldrequest::SignaldRequest;
-use tokio::time::*;
-use std::time::Duration;
+use std::time::{Instant, Duration};
 use bus::{BusReader};
 use std::sync::mpsc::RecvTimeoutError::Timeout;
 use std::sync::mpsc::RecvTimeoutError;
