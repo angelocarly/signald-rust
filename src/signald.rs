@@ -20,7 +20,8 @@ pub enum FilterType {
 
 pub struct Signald {
     // The signald socket
-    socket: Box<dyn Socket + Send + Sync>,
+    // socket: Box<dyn Socket + Send + Sync>,
+    socket: SignaldSocket,
     // A count of all the sent messages on this socket
     message_count: u32,
 }
@@ -35,7 +36,8 @@ impl Signald {
         let socket: SignaldSocket = SignaldSocket::connect(socket_path.to_string(), 100);
 
         Self {
-            socket: Box::new(socket),
+            // socket: Box::new(socket),
+            socket: socket,
             message_count: 0,
         }
     }

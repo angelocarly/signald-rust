@@ -202,7 +202,7 @@ pub struct ContactListData {
 }
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Account {
-    pub name: String,
+    pub name: Option<String>,
     pub number: String,
     pub color: String,
     #[serde(rename = "profileKey")]

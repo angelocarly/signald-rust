@@ -17,9 +17,13 @@ edition = "2018"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 bus = "2.2.3"
-tokio = { version = "0.2.13", features = ["macros", "time", "rt-threaded"] }
+tokio = { version = "0.2.13", features = ["macros", "time", "rt-threaded", "sync"] }
 futures = "0.3.4"
 
 [[example]]
 name = "message_listener"
 path = "examples/messagelistener.rs"
+
+[[example]]
+name = "async"
+path = "examples/async.rs"
