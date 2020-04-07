@@ -23,7 +23,3 @@ futures = "0.3.4"
 [[example]]
 name = "message_listener"
 path = "examples/messagelistener.rs"
-
-[[example]]
-name = "async"
-path = "examples/async.rs"

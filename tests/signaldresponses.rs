@@ -42,6 +42,7 @@ fn test_parse_sync_message_text() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::Message(x) => {
+            let x = x.unwrap();
             assert_eq!(x.username.unwrap(), "+32000000000");
 
             let sync_message = x.sync_message.unwrap();
@@ -82,6 +83,7 @@ fn test_parse_sync_message_read() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::Message(x) => {
+            let x = x.unwrap();
             assert_eq!(x.username.unwrap(), "+32000000000");
 
             let sync_message = x.sync_message.unwrap();
@@ -121,6 +123,7 @@ fn test_parse_data_message_text() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::Message(x) => {
+            let x = x.unwrap();
             let data_message = x.data_message.unwrap();
             assert_eq!(data_message.message, "Thanks");
             assert_eq!(data_message.timestamp, 1583863470594);
@@ -156,6 +159,7 @@ fn test_parse_typing_message() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::Message(x) => {
+            let x = x.unwrap();
             let typing = x.typing.unwrap();
             assert_eq!(typing.action, "STARTED");
             assert_eq!(typing.timestamp, 1583863467014);
@@ -193,6 +197,7 @@ fn test_parse_receipt_message() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::Message(x) => {
+            let x = x.unwrap();
             let receipt = x.receipt.unwrap();
             assert_eq!(receipt.typ, "DELIVERY");
             assert_eq!(receipt.timestamps.get(0).unwrap().clone(), 1583863426832u64);
@@ -216,6 +221,7 @@ fn test_parse_version_message() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::Version(x) => {
+            let x = x.unwrap();
             assert_eq!(x.name, "signald");
             assert_eq!(x.version, "0.9.0+git2020-03-08r1a9be52a.5");
             assert_eq!(x.branch, "master");
@@ -263,8 +269,9 @@ fn test_parse_contact_list_message() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::ContactList(x) => {
+            let x = x.unwrap();
             let first_entry = x.get(0).unwrap();
-            assert_eq!(first_entry.name, "AAAAA");
+            assert_eq!(first_entry.name, Some("AAAAA".to_string()));
             assert_eq!(first_entry.color, "blue_grey");
             assert_eq!(first_entry.profile_key.clone().unwrap(), "11111=");
             assert_eq!(first_entry.number, "+32111111111");
@@ -285,6 +292,7 @@ fn test_parse_linking_uri_message() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::LinkingUri(x) => {
+            let x = x.unwrap();
             assert_eq!(x.uri, "tsdevice:/?uuid=Sx9vhPhZq5KHG4nZ4w4CFQ&pub_key=BYDtS3MR5qxQnHpRZTCLXp05LvDnqulYdYfpjUqVtpxc");
         }
         _ => panic!("Received wrong response type")
@@ -310,6 +318,7 @@ fn test_parse_linking_error_message() {
     let result = SignaldResponse::from_value(message);
     match result.data {
         ResponseType::LinkingError(x) => {
+            let x = x.unwrap();
             assert_eq!(x.msg_number, 1);
             assert_eq!(x.message, "Timed out while waiting for device to link");
             assert_eq!(x.error, true);
